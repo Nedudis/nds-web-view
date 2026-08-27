@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "me.nedudis.nwv.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"MouseHandlerMixin",
+		"KeyboardHandlerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
