@@ -24,28 +24,29 @@ public class MouseHandlerMixin {
         if (buttonInfo.button() != 0 && buttonInfo.button() != 1) return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() != null) return;
-        if (mc.player == null || mc.level == null) return;
+        if (mc.gui.screen() != null || mc.player == null || mc.level == null) return;
 
         Player player = mc.player;
         Vec3 cameraPos = player.getEyePosition(1.0F);
         Vec3 lookVec = player.getViewVector(1.0F);
 
         Optional<BrowserInteraction.HitInfo> hit = BrowserInteraction.raycast(cameraPos, lookVec);
-        if (hit.isEmpty()) return;
+        if (hit.isEmpty()) {
+            if (action == 1) BrowserManager.focusedScreen = null;
+            return;
+        }
 
-        MCEFBrowser browser = BrowserManager.getBrowser();
+        if (action == 1) BrowserManager.focusedScreen = hit.get().instance();
+
+        MCEFBrowser browser = hit.get().instance().getBrowser();
         if (browser == null) return;
 
-        int[] px = BrowserInteraction.toBrowserPixels(hit.get().localX(), hit.get().localY());
+        int[] px = BrowserInteraction.toBrowserPixels(hit.get().instance(), hit.get().localX(), hit.get().localY());
         boolean pressed = action == 1;
         MouseButtonEvent event = new MouseButtonEvent(px[0], px[1], buttonInfo);
 
-        if (pressed) {
-            browser.onMouseClicked(event, false);
-        } else {
-            browser.onMouseReleased(event);
-        }
+        if (pressed) browser.onMouseClicked(event, false);
+        else browser.onMouseReleased(event);
 
         ci.cancel();
     }
@@ -53,8 +54,7 @@ public class MouseHandlerMixin {
     @Inject(method = "onMove", at = @At("HEAD"))
     private void onMove(long handle, double xpos, double ypos, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() != null) return;
-        if (mc.player == null || mc.level == null) return;
+        if (mc.gui.screen() != null || mc.player == null || mc.level == null) return;
 
         Player player = mc.player;
 
@@ -63,18 +63,17 @@ public class MouseHandlerMixin {
         Optional<BrowserInteraction.HitInfo> hit = BrowserInteraction.raycast(cameraPos, lookVec);
         if (hit.isEmpty()) return;
 
-        MCEFBrowser browser = BrowserManager.getBrowser();
+        MCEFBrowser browser = hit.get().instance().getBrowser();
         if (browser == null) return;
 
-        int[] px = BrowserInteraction.toBrowserPixels(hit.get().localX(), hit.get().localY());
+        int[] px = BrowserInteraction.toBrowserPixels(hit.get().instance(), hit.get().localX(), hit.get().localY());
         browser.onMouseMoved(px[0], px[1]);
     }
 
     @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
     private void onScroll(long handle, double xoffset, double yoffset, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() != null) return;
-        if (mc.player == null || mc.level == null) return;
+        if (mc.gui.screen() != null || mc.player == null || mc.level == null) return;
 
         Player player = mc.player;
 
@@ -83,10 +82,10 @@ public class MouseHandlerMixin {
         Optional<BrowserInteraction.HitInfo> hit = BrowserInteraction.raycast(cameraPos, lookVec);
         if (hit.isEmpty()) return;
 
-        MCEFBrowser browser = BrowserManager.getBrowser();
+        MCEFBrowser browser = hit.get().instance().getBrowser();
         if (browser == null) return;
 
-        int[] px = BrowserInteraction.toBrowserPixels(hit.get().localX(), hit.get().localY());
+        int[] px = BrowserInteraction.toBrowserPixels(hit.get().instance(), hit.get().localX(), hit.get().localY());
         browser.onMouseScrolled(px[0], px[1], yoffset);
         ci.cancel();
     }

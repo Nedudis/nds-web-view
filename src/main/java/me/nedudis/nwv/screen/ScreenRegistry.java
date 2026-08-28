@@ -35,9 +35,7 @@ public class ScreenRegistry extends SavedData {
         return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
-    public Map<String, ScreenData> getScreens() {
-        return screens;
-    }
+    public Map<String, ScreenData> getScreens() { return screens; }
 
     public Optional<ScreenData> getScreen(String name) {
         return Optional.ofNullable(screens.get(name));

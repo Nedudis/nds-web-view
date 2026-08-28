@@ -23,6 +23,7 @@ public class KeyboardHandlerMixin {
     @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void interceptBrowserKey(long handle, int action, KeyEvent event, CallbackInfo ci) {
         if (!BrowserInputState.typingMode) return;
+        if (BrowserManager.focusedScreen == null) return;
 
         int key = event.key();
 
@@ -34,7 +35,7 @@ public class KeyboardHandlerMixin {
             return;
         }
 
-        MCEFBrowser browser = BrowserManager.getBrowser();
+        MCEFBrowser browser = BrowserManager.focusedScreen.getBrowser();
         if (browser == null) return;
 
         if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
@@ -48,8 +49,9 @@ public class KeyboardHandlerMixin {
     @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
     private void interceptBrowserChar(long handle, CharacterEvent event, CallbackInfo ci) {
         if (!BrowserInputState.typingMode) return;
+        if (BrowserManager.focusedScreen == null) return;
 
-        MCEFBrowser browser = BrowserManager.getBrowser();
+        MCEFBrowser browser = BrowserManager.focusedScreen.getBrowser();
         if (browser == null) return;
 
         browser.onCharTyped(event);

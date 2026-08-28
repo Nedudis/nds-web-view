@@ -2,6 +2,7 @@ package me.nedudis.nwv.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import me.nedudis.nwv.client.browser.BrowserInputState;
+import me.nedudis.nwv.client.browser.BrowserInstance;
 import me.nedudis.nwv.client.browser.BrowserManager;
 import me.nedudis.nwv.client.render.BrowserWorldRenderer;
 import me.nedudis.nwv.network.ScreenSyncPayload;
@@ -11,6 +12,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.KeyMapping;
@@ -20,7 +22,6 @@ import org.lwjgl.glfw.GLFW;
 
 
 public class NDSWebViewClient implements ClientModInitializer {
-	private static boolean activeInWorld = false;
 	private static KeyMapping typingToggleKey;
 	private static KeyMapping backKey;
 	private static KeyMapping forwardKey;
@@ -72,7 +73,14 @@ public class NDSWebViewClient implements ClientModInitializer {
 			while (forwardKey.consumeClick()) BrowserManager.goForward();
 			while (homeKey.consumeClick()) BrowserManager.loadDefaultUrl();
 
-			if (client.player != null) BrowserManager.updateVolume(client.player);
+			if (client.player != null) BrowserManager.updateVolumeForAll(client.player);
+		});
+
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			client.execute(() -> {
+				BrowserManager.clearAllScreens();
+				System.out.println("[ NWV ] Disconnected from the world/server. All screens have been deleted from the memory.");
+			});
 		});
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -80,14 +88,6 @@ public class NDSWebViewClient implements ClientModInitializer {
 					ClientCommands.literal("nwvclient")
 							.then(ClientCommands.literal("test")
 									.executes(context -> {
-										activeInWorld = !activeInWorld;
-
-										if (isActiveInWorld()) {
-											BrowserManager.init();
-											context.getSource().sendFeedback(Component.literal("§a[NWV] Browser screen activated at (0.5, 70.0, 0.5)!"));
-										} else {
-											context.getSource().sendFeedback(Component.literal("§c[NWV] Browser screen deactivated."));
-										}
 
 										return 1;
 									})
@@ -97,15 +97,11 @@ public class NDSWebViewClient implements ClientModInitializer {
 
 		ClientPlayNetworking.registerGlobalReceiver(ScreenSyncPayload.TYPE, ((payload, context) -> {
 			context.client().execute(() -> {
-				if (payload.hasScreen()) {
-					BrowserManager.applySync(payload.data());
-				}
+				BrowserManager.applySync(payload.screens());
 			});
 		}));
 
 		LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(context -> {
-			if (!BrowserManager.isActive()) return;
-
 			var camera = context.levelState().cameraRenderState.pos;
 
 			BrowserWorldRenderer.renderInWorld(
@@ -118,8 +114,5 @@ public class NDSWebViewClient implements ClientModInitializer {
 		});
 	}
 
-	public static boolean isActiveInWorld() {
-		return activeInWorld;
-	}
 	public static KeyMapping getTypingToggleKey() { return typingToggleKey; }
 }
