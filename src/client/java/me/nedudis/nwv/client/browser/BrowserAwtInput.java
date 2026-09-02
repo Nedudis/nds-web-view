@@ -13,6 +13,7 @@ public class BrowserAwtInput {
 
     static {
         GLFW_TO_AWT_VK.put(GLFW.GLFW_KEY_ENTER, KeyEvent.VK_ENTER);
+        GLFW_TO_AWT_VK.put(GLFW.GLFW_KEY_KP_ENTER, KeyEvent.VK_ENTER);
         GLFW_TO_AWT_VK.put(GLFW.GLFW_KEY_TAB, KeyEvent.VK_TAB);
         GLFW_TO_AWT_VK.put(GLFW.GLFW_KEY_BACKSPACE, KeyEvent.VK_BACK_SPACE);
         GLFW_TO_AWT_VK.put(GLFW.GLFW_KEY_LEFT, KeyEvent.VK_LEFT);

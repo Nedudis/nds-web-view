@@ -37,9 +37,11 @@ public class NDSWebView implements ModInitializer {
 		PayloadTypeRegistry.clientboundPlay().register(ScreenSyncPayload.TYPE, ScreenSyncPayload.CODEC);
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			ServerLevel level = server.overworld();
-			ScreenRegistry registry = ScreenRegistry.get(level);
-			ServerPlayNetworking.send(handler.player, new ScreenSyncPayload(new ArrayList<>(registry.getScreens().values())));
+			if (ServerPlayNetworking.canSend(handler.player, ScreenSyncPayload.TYPE)) {
+				ServerLevel level = server.overworld();
+				ScreenRegistry registry = ScreenRegistry.get(level);
+				ServerPlayNetworking.send(handler.player, new ScreenSyncPayload(new ArrayList<>(registry.getScreens().values())));
+			}
 		});
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> {
@@ -71,7 +73,9 @@ public class NDSWebView implements ModInitializer {
 
 											ScreenSyncPayload payload = new ScreenSyncPayload(new ArrayList<>(registry.getScreens().values()));
 											for (ServerPlayer p : PlayerLookup.all(context.getSource().getServer())) {
-												ServerPlayNetworking.send(p, payload);
+												if (ServerPlayNetworking.canSend(p, ScreenSyncPayload.TYPE)) {
+													ServerPlayNetworking.send(p, payload);
+												}
 											}
 
 											context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen '" + name + "' has been created."), true);
@@ -102,7 +106,8 @@ public class NDSWebView implements ModInitializer {
 								ScreenSyncPayload payload = new ScreenSyncPayload(new ArrayList<>(registry.getScreens().values()));
 
 								for(ServerPlayer p : PlayerLookup.all(context.getSource().getServer())) {
-									ServerPlayNetworking.send(p, payload);
+									if (ServerPlayNetworking.canSend(p, ScreenSyncPayload.TYPE))
+										ServerPlayNetworking.send(p, payload);
 								}
 
 								context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen '" + name + "' has been permanently deleted."), true);
@@ -132,7 +137,8 @@ public class NDSWebView implements ModInitializer {
 
 									ScreenSyncPayload payload = new ScreenSyncPayload(new ArrayList<>(registry.getScreens().values()));
 									for(ServerPlayer p : PlayerLookup.all(context.getSource().getServer())) {
-										ServerPlayNetworking.send(p, payload);
+										if (ServerPlayNetworking.canSend(p, ScreenSyncPayload.TYPE))
+											ServerPlayNetworking.send(p, payload);
 									}
 
 									context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen's '" + name + "' URL has been set to: " + url), true);
@@ -161,7 +167,8 @@ public class NDSWebView implements ModInitializer {
 
 								ScreenSyncPayload payload = new ScreenSyncPayload(new ArrayList<>(registry.getScreens().values()));
 								for(ServerPlayer p : PlayerLookup.all(context.getSource().getServer())) {
-									ServerPlayNetworking.send(p, payload);
+									if (ServerPlayNetworking.canSend(p, ScreenSyncPayload.TYPE))
+										ServerPlayNetworking.send(p, payload);
 								}
 
 								String stateStr = toggled.enabled() ? "§aON" : "§cOFF";
