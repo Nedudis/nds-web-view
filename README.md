@@ -35,4 +35,4 @@ This project is distributed under the MIT License.
 * **Rate-Limiting:** Add a short cooldown on commands per player to prevent griefing via rapid reload, which would hit every connected client's CPU (each runs its own CEF instance).
 * **Popup/New-Window Blocking:** Investigate CEF's popup/new-window handling so a malicious or ad-heavy site can't spam additional windows or redirect unexpectedly.
 * **Sodium/Iris/Vulkan Compatibility Testing:** Verify the custom render pipeline still works correctly alongside these rendering mods.
-* **Known Issues:** ENTER/TAB/ESCAPE keys don't currently work inside the embedded browser (only character input does).
+* **Known Issues:** ENTER/TAB/ESCAPE keys don't currently work inside the embedded browser (only character input does); Screen rendering doesn't work with Vulcan rendering API.

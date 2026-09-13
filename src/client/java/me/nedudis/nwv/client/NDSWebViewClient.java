@@ -22,6 +22,17 @@ import org.lwjgl.glfw.GLFW;
 
 
 public class NDSWebViewClient implements ClientModInitializer {
+
+	static {
+		System.setProperty("java.awt.headless", "false");
+		try {
+			java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
+			System.out.println("[ NWV ] AWT Environment successfully forced.");
+		} catch (Throwable t) {
+			System.err.println("[ NWV ] AWT Environment failed: " + t.getMessage());
+		}
+	}
+
 	private static KeyMapping typingToggleKey;
 	private static KeyMapping backKey;
 	private static KeyMapping forwardKey;
@@ -32,7 +43,9 @@ public class NDSWebViewClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+
 		System.out.println(">>> NWV: CLIENT INITIALIZATION STARTED <<<");
+
 		MCEFApi.initialize();
 
 		typingToggleKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(

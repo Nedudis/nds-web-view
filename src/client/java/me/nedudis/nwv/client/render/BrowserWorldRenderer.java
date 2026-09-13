@@ -7,6 +7,7 @@ import me.nedudis.nwv.client.browser.BrowserInstance;
 import me.nedudis.nwv.client.browser.BrowserManager;
 import me.nedudis.nwv.screen.ScreenData;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 
 public class BrowserWorldRenderer {
 
@@ -38,13 +39,15 @@ public class BrowserWorldRenderer {
         float w = data.widthBlocks();
         float h = data.heightBlocks();
 
+        int overlay = OverlayTexture.NO_OVERLAY;
+
         // Bottom left
-        buffer.addVertex(pose, 0.0f, 0.0f, 0.0f).setColor(-1).setUv(0.0f, 1.0f).setLight(15728880);
+        buffer.addVertex(pose, 0.0f, 0.0f, 0.0f).setColor(-1).setUv(0.0f, 1.0f).setOverlay(overlay).setLight(15728880).setNormal(pose, 0, 0, 1);
         // Bottom right
-        buffer.addVertex(pose, w, 0.0f, 0.0f).setColor(-1).setUv(1.0f, 1.0f).setLight(15728880);
+        buffer.addVertex(pose, w, 0.0f, 0.0f).setColor(-1).setUv(1.0f, 1.0f).setOverlay(overlay).setLight(15728880).setNormal(pose, 0, 0, 1);
         // Top right
-        buffer.addVertex(pose, w, h, 0.0f).setColor(-1).setUv(1.0f, 0.0f).setLight(15728880);
+        buffer.addVertex(pose, w, h, 0.0f).setColor(-1).setUv(1.0f, 0.0f).setOverlay(overlay).setLight(15728880).setNormal(pose, 0, 0, 1);
         // Top left
-        buffer.addVertex(pose, 0.0f, h, 0.0f).setColor(-1).setUv(0.0f, 0.0f).setLight(15728880);
+        buffer.addVertex(pose, 0.0f, h, 0.0f).setColor(-1).setUv(0.0f, 0.0f).setOverlay(overlay).setLight(15728880).setNormal(pose, 0, 0, 1);
     }
 }

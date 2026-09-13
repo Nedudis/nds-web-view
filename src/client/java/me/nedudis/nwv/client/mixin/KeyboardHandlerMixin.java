@@ -1,6 +1,5 @@
 package me.nedudis.nwv.client.mixin;
 
-import me.nedudis.nwv.client.browser.BrowserAwtInput;
 import me.nedudis.nwv.client.browser.BrowserInputState;
 import me.nedudis.nwv.client.NDSWebViewClient;
 import me.nedudis.nwv.client.browser.BrowserManager;

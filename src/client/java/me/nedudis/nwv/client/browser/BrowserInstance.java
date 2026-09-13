@@ -39,10 +39,11 @@ public class BrowserInstance {
         WebBrowserTexture texture = new WebBrowserTexture(this.browser);
         Minecraft.getInstance().getTextureManager().register(this.textureId, texture);
 
-        renderType = RenderTypes.text(this.textureId);
+        renderType = RenderTypes.entityTranslucent(this.textureId);
         System.out.println("[ NWV ] New screen has been created: " + name);
     }
 
+    public Identifier getTextureId() { return textureId; }
     public String getName() { return name; }
     public ScreenData getData() { return data; }
     public MCEFBrowser getBrowser() { return browser; }
