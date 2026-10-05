@@ -52,7 +52,7 @@ public class NDSWebViewClient implements ClientModInitializer {
 
 		if (NWVClientConfig.get().incognitoMode) {
 			System.out.println("[ NWV ] Incognito Mode Active: Wiping MCEF cache directory...");
-			File mcefCache = new File(FabricLoader.getInstance().getGameDir().toFile(), "mcef");
+			File mcefCache = new File(FabricLoader.getInstance().getConfigDir().toFile(), "mcef-modern/cache");
 			if (mcefCache.exists()) deleteDirectory(mcefCache);
 		}
 
