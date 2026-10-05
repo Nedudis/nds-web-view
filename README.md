@@ -13,6 +13,18 @@ Using [mcef-modern](https://github.com/DimasKama/mcef-modern) library written by
 * **Multiplayer Friendly:** Vanilla clients can join servers with this mod without being kicked. State is synced and saved efficiently.
 * **Secure:** URL validation to prevent local IP requests and permission gated commands.
 
+
+## Server Configuration
+When you run a server, a 
+wv_server.json file will be generated in the config folder. 
+* lockLocalNetworkAndFiles: (Default true) Prevents users from linking ile:// or 127.0.0.1 making server hacking impossible.
+* whitelistedDomains: Leave empty (default) to allow all URLs. Add domains like ["youtube.com", "google.com"] to only allow specific ones.
+* maxInteractionsPerSecond: Hard limit the amount of payloads per second (protects against interaction griefing lag).
+* maxInteractDistance: Maximum distance in blocks a player can interact with a screen.
+
+* disableWebRTC: Blocks IP leaking by completely shutting off the WebRTC peer-to-peer subsystem inside chromium.
+* udioMaxDistance: Set how many blocks away screen audio can be heard (default 40.0).
+* udioDropoffExponent: 3D Spatial audio curve exponent. 1.0 = Linear. 2.0 = Realistic Inverse Square Law (default).
 ## Commands
 * /nwv create <name> <width> <height> <url> - Spawns a new browser screen facing you.
 * /nwv seturl <name> <url> - Changes the URL of a specific existing screen.

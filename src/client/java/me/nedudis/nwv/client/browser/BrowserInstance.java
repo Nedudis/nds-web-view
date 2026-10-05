@@ -44,6 +44,8 @@ public class BrowserInstance {
             this.browser.getCefBrowser().getClient().addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
                 @Override
                 public boolean onBeforePopup(CefBrowser browser, CefFrame frame, String target_url, String target_frame_name) {
+                    if (browser.getIdentifier() != BrowserInstance.this.browser.getCefBrowser().getIdentifier()) return false;
+                    
                     if (target_url != null && !target_url.isEmpty()) {
                         browser.loadURL(target_url);
                     }
@@ -54,6 +56,9 @@ public class BrowserInstance {
             this.browser.getCefBrowser().getClient().addDisplayHandler(new CefDisplayHandlerAdapter() {
                 @Override
                 public void onAddressChange(CefBrowser browser, CefFrame frame, String url) {
+                    // Check if this event belongs to THIS specific browser instance via ID match!
+                    if (browser.getIdentifier() != BrowserInstance.this.browser.getCefBrowser().getIdentifier()) return;
+
                     if (frame.isMain() && !url.equals(getData().url())) {
                         if (ClientPlayNetworking.canSend(ScreenUrlUpdatePayload.TYPE)) {
                             ClientPlayNetworking.send(new ScreenUrlUpdatePayload(getName(), url));
@@ -128,6 +133,9 @@ public class BrowserInstance {
             lastDistance = roundedDist;
             CefBrowser cefBrowser = browser.getCefBrowser();
             if (cefBrowser != null) {
+                double maxD = me.nedudis.nwv.client.NWVClientConfig.get().audioMaxDistance;
+                double exp = me.nedudis.nwv.client.NWVClientConfig.get().audioDropoffExponent;
+                
                 String jsCode =
                         "if (!window.nwvVolumeHook) {" +
                                 "  window.nwvVolumeHook = true;" +
@@ -136,16 +144,21 @@ public class BrowserInstance {
                                 "    get: function() { return this._nwvUserVol !== undefined ? this._nwvUserVol : orig.get.call(this); }," +
                                 "    set: function(v) { " +
                                 "      this._nwvUserVol = v; " +
-                                "      let maxHearableBlocks = 100.0; " +
-                                "      let effectiveVol = Math.max(0.0, v - (window.nwvDist / maxHearableBlocks));" +
+                                "      let effectiveVol = 0.0;" +
+                                "      if (window.nwvDist <= window.nwvMaxDist) {" +
+                                "         let normalized = 1.0 - (window.nwvDist / window.nwvMaxDist);" +
+                                "         effectiveVol = v * Math.pow(Math.max(0.0, normalized), window.nwvExp);" +
+                                "      }" +
                                 "      orig.set.call(this, effectiveVol);" +
                                 "    }" +
                                 "  });" +
                                 "}" +
                                 "window.nwvDist = " + roundedDist + ";" +
+                                "window.nwvMaxDist = " + maxD + ";" +
+                                "window.nwvExp = " + exp + ";" +
                                 "document.querySelectorAll('video, audio').forEach(e => {" +
                                 "  if (e._nwvUserVol === undefined) e._nwvUserVol = e.volume;" +
-                                "  e.volume = e._nwvUserVol;" +
+                                "  e.volume = e._nwvUserVol;" + // Trigger setter
                                 "});";
                 cefBrowser.executeJavaScript(jsCode, cefBrowser.getURL(), 0);
             }

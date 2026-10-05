@@ -35,7 +35,8 @@ public class NDSWebView implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		LOGGER.info("Hello Fabric world!");
+		LOGGER.info("Initializing NWV Server...");
+		NWVServerConfig.load();
 
 		PayloadTypeRegistry.clientboundPlay().register(ScreenSyncPayload.TYPE, ScreenSyncPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ScreenInteractPayload.TYPE, ScreenInteractPayload.CODEC);
@@ -77,7 +78,10 @@ public class NDSWebView implements ModInitializer {
 											}
 
 											ServerPlayer player = context.getSource().getPlayerOrException();
-											ServerLevel level = context.getSource().getLevel();
+											
+											
+											
+									ServerLevel level = context.getSource().getLevel();
 											ScreenRegistry registry = ScreenRegistry.get(level);
 
 											Direction facing = player.getDirection().getOpposite();
@@ -109,7 +113,8 @@ public class NDSWebView implements ModInitializer {
 
 								String name = StringArgumentType.getString(context, "name");
 
-								ServerLevel level = context.getSource().getLevel();
+										
+									ServerLevel level = context.getSource().getLevel();
 								ScreenRegistry registry = ScreenRegistry.get(level);
 
 								Optional<ScreenData> opt = registry.getScreen(name);
@@ -145,6 +150,8 @@ public class NDSWebView implements ModInitializer {
 										return 0;
 									}
 
+									
+											
 									ServerLevel level = context.getSource().getLevel();
 									ScreenRegistry registry = ScreenRegistry.get(level);
 
@@ -175,7 +182,8 @@ public class NDSWebView implements ModInitializer {
 
 								String name = StringArgumentType.getString(context, "name");
 
-								ServerLevel level = context.getSource().getLevel();
+										
+									ServerLevel level = context.getSource().getLevel();
 								ScreenRegistry registry = ScreenRegistry.get(level);
 
 								Optional<ScreenData> opt = registry.getScreen(name);
@@ -203,7 +211,8 @@ public class NDSWebView implements ModInitializer {
 						
 						
 						.executes(context -> {
-							ServerLevel level = context.getSource().getLevel();
+									
+									ServerLevel level = context.getSource().getLevel();
 							ScreenRegistry registry = ScreenRegistry.get(level);
 							registry.getScreens().clear();
 							registry.setDirty();

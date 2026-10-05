@@ -15,6 +15,10 @@ public class NWVClientConfig {
 
     public boolean  incognitoMode = true;
     public boolean  disableWebRTC = true;
+    
+    // Audio configuration for realistic spatial audio
+    public double   audioMaxDistance = 40.0;
+    public double   audioDropoffExponent = 2.0;
 
     private static NWVClientConfig instance;
 
