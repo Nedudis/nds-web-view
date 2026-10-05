@@ -2,6 +2,9 @@ package me.nedudis.nwv;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import me.nedudis.nwv.network.InteractionServerHandler;
+import me.nedudis.nwv.network.ScreenInteractPayload;
+import me.nedudis.nwv.network.ScreenUrlUpdatePayload;
 import me.nedudis.nwv.network.ScreenSyncPayload;
 import me.nedudis.nwv.screen.ScreenData;
 import me.nedudis.nwv.screen.ScreenRegistry;
@@ -35,6 +38,13 @@ public class NDSWebView implements ModInitializer {
 		LOGGER.info("Hello Fabric world!");
 
 		PayloadTypeRegistry.clientboundPlay().register(ScreenSyncPayload.TYPE, ScreenSyncPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(ScreenInteractPayload.TYPE, ScreenInteractPayload.CODEC);
+		
+		PayloadTypeRegistry.serverboundPlay().register(ScreenInteractPayload.TYPE, ScreenInteractPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(ScreenUrlUpdatePayload.TYPE, ScreenUrlUpdatePayload.CODEC);
+
+		ServerPlayNetworking.registerGlobalReceiver(ScreenInteractPayload.TYPE, InteractionServerHandler::handleInteract);
+		ServerPlayNetworking.registerGlobalReceiver(ScreenUrlUpdatePayload.TYPE, InteractionServerHandler::handleUrlUpdate);
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			if (ServerPlayNetworking.canSend(handler.player, ScreenSyncPayload.TYPE)) {
@@ -47,6 +57,8 @@ public class NDSWebView implements ModInitializer {
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> {
 			dispatcher.register(
 				Commands.literal("nwv")
+					
+					
 					.then(Commands.literal("create")
 						.then(Commands.argument("name", StringArgumentType.word())
 							.then(Commands.argument("width", FloatArgumentType.floatArg(1.0f, 100.0f))
@@ -58,6 +70,11 @@ public class NDSWebView implements ModInitializer {
 											float width = FloatArgumentType.getFloat(context, "width");
 											float height = FloatArgumentType.getFloat(context, "height");
 											String url = StringArgumentType.getString(context, "url");
+
+											if (url.toLowerCase().contains("127.0.0.1") || url.toLowerCase().contains("localhost") || url.toLowerCase().startsWith("file://")) {
+												context.getSource().sendFailure(Component.literal("\u00a7c[NWV] Malicious Local IP/File URLs are strictly forbidden."));
+												return 0;
+											}
 
 											ServerPlayer player = context.getSource().getPlayerOrException();
 											ServerLevel level = context.getSource().getLevel();
@@ -78,7 +95,7 @@ public class NDSWebView implements ModInitializer {
 												}
 											}
 
-											context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen '" + name + "' has been created."), true);
+											context.getSource().sendSuccess(() -> Component.literal("\u00a7a[NWV] Screen '" + name + "' has been created."), true);
 											return 1;
 										})
 									)
@@ -97,7 +114,7 @@ public class NDSWebView implements ModInitializer {
 
 								Optional<ScreenData> opt = registry.getScreen(name);
 								if (opt.isEmpty()) {
-									context.getSource().sendFailure(Component.literal("§c[NWV] The screen '" + name + "' was not found."));
+									context.getSource().sendFailure(Component.literal("\u00a7c[NWV] The screen '" + name + "' was not found."));
 									return 0;
 								}
 
@@ -110,7 +127,7 @@ public class NDSWebView implements ModInitializer {
 										ServerPlayNetworking.send(p, payload);
 								}
 
-								context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen '" + name + "' has been permanently deleted."), true);
+								context.getSource().sendSuccess(() -> Component.literal("\u00a7a[NWV] Screen '" + name + "' has been permanently deleted."), true);
 								return 1;
 							})
 						)
@@ -123,12 +140,17 @@ public class NDSWebView implements ModInitializer {
 									String name = StringArgumentType.getString(context, "name");
 									String url = StringArgumentType.getString(context, "url");
 
+									if (url.toLowerCase().contains("127.0.0.1") || url.toLowerCase().contains("localhost") || url.toLowerCase().startsWith("file://")) {
+										context.getSource().sendFailure(Component.literal("\u00a7c[NWV] Malicious Local IP/File URLs are strictly forbidden."));
+										return 0;
+									}
+
 									ServerLevel level = context.getSource().getLevel();
 									ScreenRegistry registry = ScreenRegistry.get(level);
 
 									Optional<ScreenData> opt = registry.getScreen(name);
 									if (opt.isEmpty()) {
-										context.getSource().sendFailure(Component.literal("§c[NWV] The screen '" + name + "' was not found."));
+										context.getSource().sendFailure(Component.literal("\u00a7c[NWV] The screen '" + name + "' was not found."));
 										return 0;
 									}
 
@@ -141,7 +163,7 @@ public class NDSWebView implements ModInitializer {
 											ServerPlayNetworking.send(p, payload);
 									}
 
-									context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen's '" + name + "' URL has been set to: " + url), true);
+									context.getSource().sendSuccess(() -> Component.literal("\u00a7a[NWV] Screen's '" + name + "' URL has been set to: " + url), true);
 									return 1;
 								})
 							)
@@ -158,7 +180,7 @@ public class NDSWebView implements ModInitializer {
 
 								Optional<ScreenData> opt = registry.getScreen(name);
 								if (opt.isEmpty()) {
-									context.getSource().sendFailure(Component.literal("§c[NWV] The screen '" + name + "' was not found."));
+									context.getSource().sendFailure(Component.literal("\u00a7c[NWV] The screen '" + name + "' was not found."));
 									return 0;
 								}
 
@@ -171,11 +193,30 @@ public class NDSWebView implements ModInitializer {
 										ServerPlayNetworking.send(p, payload);
 								}
 
-								String stateStr = toggled.enabled() ? "§aON" : "§cOFF";
-								context.getSource().sendSuccess(() -> Component.literal("§a[NWV] Screen '" + name + "' is now: " + stateStr), true);
+								String stateStr = toggled.enabled() ? "\u00a7aON" : "\u00a7cOFF";
+								context.getSource().sendSuccess(() -> Component.literal("\u00a7a[NWV] Screen '" + name + "' is now: " + stateStr), true);
 								return 1;
 							})
 						)
+					)
+					.then(Commands.literal("emergency_wipe")
+						
+						
+						.executes(context -> {
+							ServerLevel level = context.getSource().getLevel();
+							ScreenRegistry registry = ScreenRegistry.get(level);
+							registry.getScreens().clear();
+							registry.setDirty();
+
+							ScreenSyncPayload payload = new ScreenSyncPayload(new ArrayList<>());
+							for(ServerPlayer p : PlayerLookup.all(context.getSource().getServer())) {
+								if (ServerPlayNetworking.canSend(p, ScreenSyncPayload.TYPE))
+									ServerPlayNetworking.send(p, payload);
+							}
+							
+							context.getSource().sendSuccess(() -> Component.literal("\u00a7c\u00a7l[NWV] ALL SCREENS HAVE BEEN PURGED GLOBALLY!"), true);
+							return 1;
+						})
 					)
 			);
 		});
@@ -185,3 +226,5 @@ public class NDSWebView implements ModInitializer {
 		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
 }
+
+

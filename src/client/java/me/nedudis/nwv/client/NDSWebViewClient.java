@@ -2,9 +2,10 @@ package me.nedudis.nwv.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import me.nedudis.nwv.client.browser.BrowserInputState;
-import me.nedudis.nwv.client.browser.BrowserInstance;
 import me.nedudis.nwv.client.browser.BrowserManager;
+import me.nedudis.nwv.client.network.InteractionClientHandler;
 import me.nedudis.nwv.client.render.BrowserWorldRenderer;
+import me.nedudis.nwv.network.ScreenInteractPayload;
 import me.nedudis.nwv.network.ScreenSyncPayload;
 import net.dimaskama.mcef.api.MCEFApi;
 import net.fabricmc.api.ClientModInitializer;
@@ -15,11 +16,13 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.File;
 
 public class NDSWebViewClient implements ClientModInitializer {
 
@@ -43,8 +46,15 @@ public class NDSWebViewClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-
 		System.out.println(">>> NWV: CLIENT INITIALIZATION STARTED <<<");
+
+		NWVClientConfig.load();
+
+		if (NWVClientConfig.get().incognitoMode) {
+			System.out.println("[ NWV ] Incognito Mode Active: Wiping MCEF cache directory...");
+			File mcefCache = new File(FabricLoader.getInstance().getGameDir().toFile(), "mcef");
+			if (mcefCache.exists()) deleteDirectory(mcefCache);
+		}
 
 		MCEFApi.initialize();
 
@@ -76,7 +86,7 @@ public class NDSWebViewClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while(typingToggleKey.consumeClick()) {
 				BrowserInputState.typingMode = !BrowserInputState.typingMode;
-				String status = BrowserInputState.typingMode ? "§aON" : "§cOFF";
+				String status = BrowserInputState.typingMode ? "\u00a7aON" : "\u00a7cOFF";
 				if (client.player != null) {
 					client.player.sendSystemMessage(Component.literal("[ NWV ] Typing mode: " + status));
 				}
@@ -101,7 +111,6 @@ public class NDSWebViewClient implements ClientModInitializer {
 					ClientCommands.literal("nwvclient")
 							.then(ClientCommands.literal("test")
 									.executes(context -> {
-
 										return 1;
 									})
 							)
@@ -111,6 +120,12 @@ public class NDSWebViewClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(ScreenSyncPayload.TYPE, ((payload, context) -> {
 			context.client().execute(() -> {
 				BrowserManager.applySync(payload.screens());
+			});
+		}));
+
+		ClientPlayNetworking.registerGlobalReceiver(ScreenInteractPayload.TYPE, ((payload, context) -> {
+			context.client().execute(() -> {
+				InteractionClientHandler.handleInteract(payload, context);
 			});
 		}));
 
@@ -128,4 +143,14 @@ public class NDSWebViewClient implements ClientModInitializer {
 	}
 
 	public static KeyMapping getTypingToggleKey() { return typingToggleKey; }
+
+	private boolean deleteDirectory(File directoryToBeDeleted) {
+		File[] allContents = directoryToBeDeleted.listFiles();
+		if (allContents != null) {
+			for (File file : allContents) {
+				deleteDirectory(file);
+			}
+		}
+		return directoryToBeDeleted.delete();
+	}
 }

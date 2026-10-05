@@ -2,7 +2,9 @@ package me.nedudis.nwv.client.mixin;
 
 import me.nedudis.nwv.client.browser.BrowserManager;
 import me.nedudis.nwv.client.interaction.BrowserInteraction;
+import me.nedudis.nwv.network.ScreenInteractPayload;
 import net.dimaskama.mcef.api.MCEFBrowser;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -48,6 +50,20 @@ public class MouseHandlerMixin {
         if (pressed) browser.onMouseClicked(event, false);
         else browser.onMouseReleased(event);
 
+        // SYNC INTERACTION TO SERVER
+        double[] uv = BrowserInteraction.toNormalizedUV(hit.get().instance(), hit.get().localX(), hit.get().localY());
+        int actionType = pressed ? ScreenInteractPayload.Actions.MOUSE_DOWN : ScreenInteractPayload.Actions.MOUSE_UP;
+        
+        if (ClientPlayNetworking.canSend(ScreenInteractPayload.TYPE)) {
+            ClientPlayNetworking.send(new ScreenInteractPayload(
+                hit.get().instance().getName(),
+                actionType,
+                uv[0], uv[1],
+                buttonInfo.button(),
+                buttonInfo.modifiers()
+            ));
+        }
+
         ci.cancel();
     }
 
@@ -68,6 +84,8 @@ public class MouseHandlerMixin {
 
         int[] px = BrowserInteraction.toBrowserPixels(hit.get().instance(), hit.get().localX(), hit.get().localY());
         browser.onMouseMoved(px[0], px[1]);
+        
+        // We INTENTIONALLY do not sync mouse hovers to avoid severe server lag!
     }
 
     @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
@@ -87,6 +105,19 @@ public class MouseHandlerMixin {
 
         int[] px = BrowserInteraction.toBrowserPixels(hit.get().instance(), hit.get().localX(), hit.get().localY());
         browser.onMouseScrolled(px[0], px[1], yoffset);
+
+        // SYNC INTERACTION TO SERVER
+        double[] uv = BrowserInteraction.toNormalizedUV(hit.get().instance(), hit.get().localX(), hit.get().localY());
+        if (ClientPlayNetworking.canSend(ScreenInteractPayload.TYPE)) {
+            ClientPlayNetworking.send(new ScreenInteractPayload(
+                hit.get().instance().getName(),
+                ScreenInteractPayload.Actions.SCROLL,
+                uv[0], uv[1],
+                (int) yoffset,
+                0 // Scroll modifiers if we need
+            ));
+        }
+
         ci.cancel();
     }
 }

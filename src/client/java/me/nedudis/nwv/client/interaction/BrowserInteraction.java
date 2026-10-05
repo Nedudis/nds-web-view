@@ -89,17 +89,22 @@ public class BrowserInteraction {
         return Optional.of(new HitInfo(closestInstance, closestLocalX, closestLocalY));
     }
 
-    public static int[] toBrowserPixels(BrowserInstance instance, double localX, double localY) {
+    public static double[] toNormalizedUV(BrowserInstance instance, double localX, double localY) {
         ScreenData data = instance.getData();
+        double u = localX / data.widthBlocks();
+        double v = 1.0 - (localY / data.heightBlocks());
+        return new double[] {u, v};
+    }
 
-        double fracX = localX / data.widthBlocks();
-        double fracY = localY / data.heightBlocks();
+    public static int[] toBrowserPixels(BrowserInstance instance, double localX, double localY) {
+        double[] uv = toNormalizedUV(instance, localX, localY);
+        ScreenData data = instance.getData();
 
         int pxWidth = (int) (data.widthBlocks() * 120);
         int pxHeight = (int) (data.heightBlocks() * 120);
 
-        int px = (int) (fracX * pxWidth);
-        int py = (int) ((1.0 - fracY) * pxHeight);
+        int px = (int) (uv[0] * pxWidth);
+        int py = (int) (uv[1] * pxHeight);
         return new int[] {px, py};
     }
 }

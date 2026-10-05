@@ -1,9 +1,11 @@
 package me.nedudis.nwv.client.browser;
 
 import me.nedudis.nwv.client.render.WebBrowserTexture;
+import me.nedudis.nwv.network.ScreenUrlUpdatePayload;
 import me.nedudis.nwv.screen.ScreenData;
 import net.dimaskama.mcef.api.MCEFApi;
 import net.dimaskama.mcef.api.MCEFBrowser;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -11,6 +13,9 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import org.cef.browser.CefBrowser;
+import org.cef.browser.CefFrame;
+import org.cef.handler.CefLifeSpanHandlerAdapter;
+import org.cef.handler.CefDisplayHandlerAdapter;
 
 public class BrowserInstance {
     private final   String      name;
@@ -34,6 +39,29 @@ public class BrowserInstance {
 
         this.browser = MCEFApi.getInstance().createBrowser(data.url(), false);
         this.browser.resize(pxWidth, pxHeight);
+
+        if (this.browser.getCefBrowser() != null && this.browser.getCefBrowser().getClient() != null) {
+            this.browser.getCefBrowser().getClient().addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+                @Override
+                public boolean onBeforePopup(CefBrowser browser, CefFrame frame, String target_url, String target_frame_name) {
+                    if (target_url != null && !target_url.isEmpty()) {
+                        browser.loadURL(target_url);
+                    }
+                    return true;
+                }
+            });
+
+            this.browser.getCefBrowser().getClient().addDisplayHandler(new CefDisplayHandlerAdapter() {
+                @Override
+                public void onAddressChange(CefBrowser browser, CefFrame frame, String url) {
+                    if (frame.isMain() && !url.equals(getData().url())) {
+                        if (ClientPlayNetworking.canSend(ScreenUrlUpdatePayload.TYPE)) {
+                            ClientPlayNetworking.send(new ScreenUrlUpdatePayload(getName(), url));
+                        }
+                    }
+                }
+            });
+        }
 
         this.textureId = Identifier.fromNamespaceAndPath("nwv", "browser_" + name);
         WebBrowserTexture texture = new WebBrowserTexture(this.browser);
